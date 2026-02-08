@@ -1,6 +1,6 @@
-# Spatial PKM – Repository Setup Guide
+# Kakicom PKM – Repository Setup Guide
 
-このドキュメントは、Spatial PKM の **MVP開発に入るためのリポジトリ作成手順と初期方針** をまとめたものである。
+このドキュメントは、Kakicom PKM の **MVP開発に入るためのリポジトリ作成手順と初期方針** をまとめたものである。
 本段階では「思想・ドメインを壊さず、後戻りコストを最小化する」ことを最優先とする。
 
 ---
@@ -32,7 +32,7 @@
 
 2. リポジトリ名は以下を推奨
 
-   * `spatial-pkm`
+   * `Kakicom-pkm`
    * `cognitive-map`
    * `thinking-space`
 
@@ -46,7 +46,7 @@
 ### 2.2 README.md の最小記述
 
 ```text
-This project is an experimental spatial PKM focused on cognitive exploration rather than linear note-taking.
+This project is an experimental Kakicom PKM focused on cognitive exploration rather than linear note-taking.
 
 The goal is to externalize thinking into a navigable space of nodes, views, and projections.
 ```
@@ -58,7 +58,7 @@ The goal is to externalize thinking into a navigable space of nodes, views, and 
 ## 3. 推奨ディレクトリ構成（MVP）
 
 ```text
-spatial-pkm/
+Kakicom-pkm/
 ├─ docs/                # ドメインモデル・設計思想
 │  ├─ domain-model.md
 │  ├─ repository-setup.md
