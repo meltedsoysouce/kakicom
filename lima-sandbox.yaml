@@ -1,0 +1,76 @@
+# lima-sandbox.yaml
+vmType: "qemu"
+os: "Linux"
+arch: "default"
+
+# VM リソース
+cpus: 4
+memory: "8GiB"
+disk: "20GiB"
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-arm64.img"
+    arch: "aarch64"
+
+# ホストの作業ディレクトリをVM内の /src に同期
+mounts:
+  - location: "__WORKTREE_ABSPATH__"
+    mountPoint: "/src"
+    mountType: "rsync"
+    writable: true
+    rsync:
+      ignoreRepoDotGit: true
+      bwlimit: "100m"
+
+# Vite dev server / preview 等のポートフォワーディング
+portForwards:
+  - guestPort: 5173
+    hostPort: 5173
+  - guestPort: 4173
+    hostPort: 4173
+  - guestPort: 3000
+    hostPort: 3000
+
+# システムレベルのプロビジョニング
+provision:
+  - mode: system
+    script: |
+      set -eux
+      apt-get update
+      apt-get install -y git curl build-essential
+
+      # Node.js 22 (flake.nix と同じバージョン)
+      curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+      apt-get install -y nodejs
+
+      # pnpm (corepack 経由)
+      corepack enable
+      corepack prepare pnpm@latest --activate
+
+      # Claude Code CLI
+      npm install -g @anthropic-ai/claude-code
+
+  # ユーザーレベルのプロビジョニング
+  - mode: user
+    script: |
+      set -eux
+      # VM 内限定の git 設定
+      git config --global user.name "Coding Agent"
+      git config --global user.email "agent@sandbox.local"
+
+      # ホストの .git は同期されないため、VM 内で git リポジトリを初期化
+      cd /src
+      git init
+      git add -A
+      git commit -m "initial sandbox state"
+
+      # 依存パッケージのインストール
+      cd /src/app
+      pnpm install
+
+# 作業ディレクトリをデフォルトに設定
+shell:
+  defaultShellLnx: bash
+  workingDirectory: "/src"
