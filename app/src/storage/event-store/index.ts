@@ -7,23 +7,13 @@ export type {
   EventStore,
 } from "./types.ts";
 
-import type { EventStore, NodeSnapshot } from "./types.ts";
+import type { NodeSnapshot } from "./types.ts";
 import type { NodeId, Timestamp } from "../../model/node/index.ts";
 import type { ThoughtEvent } from "../../model/event/index.ts";
 
-// ── EventStore 生成 ──
+export { createEventStore } from "./event-store.ts";
 
-/**
- * EventStoreを生成して初期化する。
- * 内部でdb/のIndexedDB接続を行う。
- */
-export function createEventStore(_options?: {
-  dbName?: string;
-}): Promise<EventStore> {
-  throw new Error("not implemented");
-}
-
-// ── リプレイ ──
+// ── リプレイ（スタブ） ──
 
 /**
  * イベントログからNodeの現在状態を再構成する。
