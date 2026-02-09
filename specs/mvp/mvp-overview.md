@@ -111,3 +111,5 @@ component/
 - [実装順序](./implementation-order.md)
 - [コンポーネント別仕様](./components/)
 - [アプリ統合仕様](./integration/app-entry.md)
+- 各コンポーネントの設計仕様: `app/src/<module>/<component>/COMPONENT.md`
+- 各コンポーネントの型定義: `app/src/<module>/<component>/types.ts`
