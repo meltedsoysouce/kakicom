@@ -27,25 +27,16 @@ export type {
   InputHandlerParams,
 } from "./types.ts";
 
-import type {
-  InputConfig,
-  InputHandler,
-  InputHandlerParams,
-} from "./types.ts";
+import type { InputConfig } from "./types.ts";
 
 // ── InputHandler 生成 ──
 
-/**
- * InputHandlerを生成する。
- *
- * viewport: 座標変換に使用
- * hitTester: ヒットテストに使用
- */
-export function createInputHandler(
-  _params: InputHandlerParams,
-): InputHandler {
-  throw new Error("not implemented");
-}
+export { createInputHandler } from "./input-handler.ts";
+
+// ── DragMachine ──
+
+export { createDragMachine } from "./drag-machine.ts";
+export type { DragMachine } from "./drag-machine.ts";
 
 // ── 定数 ──
 
