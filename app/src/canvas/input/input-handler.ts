@@ -112,7 +112,7 @@ export function createInputHandler(
 
   // ── Public API ──
 
-  const handler: InputHandler & { setViewport(state: ViewportState): void } = {
+  const handler: InputHandler = {
     attach(c: HTMLCanvasElement): void {
       canvas = c;
       canvas.addEventListener("mousedown", onMouseDown);
