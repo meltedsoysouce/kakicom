@@ -1,6 +1,7 @@
 import { openDatabase, KAKICOM_DB_CONFIG, STORE_NAMES } from "../db/index.ts";
 import type { Database } from "../db/index.ts";
-import type { NodeSnapshot, EventStore } from "./types.ts";
+import type { NodeSnapshot, PersistedNodeRecord, EventStore } from "./types.ts";
+import type { Position } from "../../model/projection/index.ts";
 import type { NodeId } from "../../model/node/index.ts";
 
 export async function createEventStore(options?: {
@@ -15,16 +16,22 @@ export async function createEventStore(options?: {
   return {
     // ── Node CRUD (MVP implementation) ──
 
-    async saveNode(snapshot: NodeSnapshot): Promise<void> {
+    async saveNode(snapshot: NodeSnapshot, position?: Position): Promise<void> {
+      const record: PersistedNodeRecord = {
+        node: snapshot.node,
+        dormancyState: snapshot.dormancyState,
+        updatedAt: snapshot.updatedAt,
+        position: position ?? null,
+      };
       const tx = db.transaction([STORE_NAMES.NODES], "readwrite");
-      const store = tx.store<NodeSnapshot>(STORE_NAMES.NODES);
-      await store.put(snapshot);
+      const store = tx.store<PersistedNodeRecord>(STORE_NAMES.NODES);
+      await store.put(record);
       await tx.done();
     },
 
-    async getAllNodes(): Promise<readonly NodeSnapshot[]> {
+    async getAllNodes(): Promise<readonly PersistedNodeRecord[]> {
       const tx = db.transaction([STORE_NAMES.NODES], "readonly");
-      const store = tx.store<NodeSnapshot>(STORE_NAMES.NODES);
+      const store = tx.store<PersistedNodeRecord>(STORE_NAMES.NODES);
       return await store.getAll();
     },
 

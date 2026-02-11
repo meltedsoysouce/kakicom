@@ -1,24 +1,24 @@
-import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+import "./style.css";
+import { createEventStore } from "./storage/event-store/index.ts";
+import { createApp } from "./app.ts";
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`
+async function main(): Promise<void> {
+  // 1. DOM取得
+  const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+  const container = document.getElementById("app") as HTMLDivElement;
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+  // 2. ストレージ初期化
+  const eventStore = await createEventStore();
+
+  // 3. 既存Node読み込み
+  const records = await eventStore.getAllNodes();
+
+  // 4. アプリ生成・起動
+  const app = createApp({ canvas, container, eventStore, initialRecords: records });
+  app.start();
+
+  // 5. リサイズ対応
+  window.addEventListener("resize", () => app.resize());
+}
+
+main().catch(console.error);

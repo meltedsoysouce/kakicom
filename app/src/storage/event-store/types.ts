@@ -6,6 +6,7 @@ import type {
   SessionId,
 } from "../../model/event/index.ts";
 import type { DormancyState } from "../../model/meta/index.ts";
+import type { Position } from "../../model/projection/index.ts";
 
 /**
  * ThoughtEventの検索条件。
@@ -46,6 +47,18 @@ export interface NodeSnapshot {
   readonly node: Node;
   readonly dormancyState: DormancyState;
   readonly updatedAt: Timestamp;
+}
+
+/**
+ * IndexedDBに保存されるNodeデータ。
+ * NodeSnapshotに加えて、位置情報も含む。
+ * keyPath: "node.id" に対応する構造。
+ */
+export interface PersistedNodeRecord {
+  readonly node: Node;
+  readonly dormancyState: DormancyState;
+  readonly updatedAt: Timestamp;
+  readonly position: Position | null;
 }
 
 /**
@@ -93,11 +106,11 @@ export interface EventStore {
 
   // ── Node スナップショット ──
 
-  /** Nodeスナップショットを保存する（upsert）。 */
-  saveNode(snapshot: NodeSnapshot): Promise<void>;
+  /** Nodeスナップショットを保存する（upsert）。位置情報も一緒に永続化する。 */
+  saveNode(snapshot: NodeSnapshot, position?: Position): Promise<void>;
 
-  /** 全Nodeスナップショットを取得する。 */
-  getAllNodes(): Promise<readonly NodeSnapshot[]>;
+  /** 全Node（スナップショット＋位置情報）を取得する。 */
+  getAllNodes(): Promise<readonly PersistedNodeRecord[]>;
 
   /** 指定IDのNodeスナップショットを取得する。 */
   getNode(nodeId: NodeId): Promise<NodeSnapshot | null>;

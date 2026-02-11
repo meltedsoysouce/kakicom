@@ -216,6 +216,8 @@ export interface InputHandler {
   setAffordances(affordances: readonly Affordance[]): void;
   /** InputConfigを更新する。 */
   setConfig(config: Partial<InputConfig>): void;
+  /** ViewportStateを更新する（座標変換に使用）。 */
+  setViewport(state: ViewportState): void;
 }
 
 /**
