@@ -19,7 +19,7 @@ import {
   measureCanvasSize,
   applyCanvasSize,
 } from "./canvas/viewport/index.ts";
-import { createRenderer, toRenderableNode, DARK_THEME } from "./canvas/renderer/index.ts";
+import { createRenderer, toRenderableNode, STATIONERY_THEME, applyThemeToCss } from "./canvas/renderer/index.ts";
 import { createHitTester, buildHitTestableScene } from "./canvas/hit-test/index.ts";
 import { createInputHandler } from "./canvas/input/index.ts";
 import { createTextEditor } from "./text-editor.ts";
@@ -75,7 +75,7 @@ export function createApp(params: {
     return { camera: state.camera, canvasSize: state.canvasSize };
   }
 
-  const renderer = createRenderer({ theme: DARK_THEME });
+  const renderer = createRenderer({ theme: STATIONERY_THEME });
   const hitTester = createHitTester();
   const inputHandler = createInputHandler({
     viewport: getViewport(),
@@ -253,6 +253,9 @@ export function createApp(params: {
 
   return {
     start(): void {
+      // テーマのCSS反映（Canvas外UI要素にも配色を適用）
+      applyThemeToCss(STATIONERY_THEME);
+
       // Canvas初期化
       const size = measureCanvasSize(canvas);
       state.canvasSize = size;
