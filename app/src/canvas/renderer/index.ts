@@ -27,7 +27,7 @@ export { createRenderer } from "./renderer.ts";
 
 // ── テーマ ──
 
-export { DARK_THEME, LIGHT_THEME } from "./theme.ts";
+export { DARK_THEME, LIGHT_THEME, STATIONERY_THEME, applyThemeToCss } from "./theme.ts";
 
 // ── RenderScene 構築補助 ──
 

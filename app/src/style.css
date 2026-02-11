@@ -8,7 +8,7 @@ html, body, #app {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #1a1a2e;
+  background: var(--kakicom-background, #faf6ef);
 }
 
 #canvas {
@@ -19,13 +19,13 @@ html, body, #app {
 
 .node-text-editor {
   position: absolute;
-  background: #16213e;
-  color: #e0e0e0;
-  border: 2px solid #53c2f0;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 14px;
-  font-family: system-ui, sans-serif;
+  background: var(--kakicom-node-fill, #fef3c0);
+  color: var(--kakicom-node-text, #3c3022);
+  border: 2px solid var(--kakicom-selection, #1a5276);
+  border-radius: var(--kakicom-node-radius, 8px);
+  padding: 8px var(--kakicom-node-padding, 12px);
+  font-size: var(--kakicom-node-font-size, 14px);
+  font-family: var(--kakicom-node-font-family, system-ui, sans-serif);
   resize: both;
   outline: none;
   z-index: 100;
