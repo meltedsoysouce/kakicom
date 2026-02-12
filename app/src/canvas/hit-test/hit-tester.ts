@@ -6,7 +6,7 @@ import type {
 } from "./types.ts";
 import type { WorldPoint, WorldRect } from "../viewport/index.ts";
 import type { NodeId } from "../../model/node/index.ts";
-import { rectContainsPoint, rectContainsRect, rectIntersects, expandRect } from "./rect-utils.ts";
+import { rectContainsPoint, rectContainsRect, rectIntersects, expandRect, distanceToSegment } from "./rect-utils.ts";
 
 /**
  * HitTesterを生成する。
@@ -22,7 +22,7 @@ export function createHitTester(
     ...options,
   };
 
-  let scene: HitTestableScene = { entries: [] };
+  let scene: HitTestableScene = { entries: [], edges: [] };
 
   return {
     setScene(s: HitTestableScene): void {
@@ -32,12 +32,26 @@ export function createHitTester(
     hitTestPoint(point: WorldPoint, opts?: Partial<HitTestOptions>): HitTarget {
       const merged = { ...defaultOptions, ...opts };
 
-      // 後ろの要素ほど前面（z-index大）→ 逆順に走査して最初にヒットしたものが最前面
+      // Node優先: 後ろの要素ほど前面（z-index大）→ 逆順に走査して最初にヒットしたものが最前面
       for (let i = scene.entries.length - 1; i >= 0; i--) {
         const entry = scene.entries[i];
         const expanded = expandRect(entry.bounds, merged.margin);
         if (rectContainsPoint(expanded, point)) {
           return { type: "node", nodeId: entry.nodeId };
+        }
+      }
+
+      // Edge: 点から線分への距離が閾値以内ならヒット
+      const edgeHitThreshold = 8;
+      for (const edge of scene.edges) {
+        const dist = distanceToSegment(point, edge.sourcePosition, edge.targetPosition);
+        if (dist <= edgeHitThreshold) {
+          return {
+            type: "edge",
+            edgeId: edge.edgeId,
+            sourceNodeId: edge.sourceNodeId,
+            targetNodeId: edge.targetNodeId,
+          };
         }
       }
 

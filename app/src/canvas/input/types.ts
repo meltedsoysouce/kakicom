@@ -1,6 +1,7 @@
 import type { ScreenPoint, WorldPoint, WorldRect } from "../viewport/index.ts";
 import type { HitTarget } from "../hit-test/index.ts";
 import type { NodeId } from "../../model/node/index.ts";
+import type { EdgeId } from "../../model/edge/index.ts";
 import type { Affordance } from "../../model/view/index.ts";
 import type { ViewportState } from "../viewport/index.ts";
 import type { HitTester } from "../hit-test/index.ts";
@@ -20,6 +21,7 @@ export type InputAction =
   | NodeDragStartAction
   | NodeDragMoveAction
   | NodeDragEndAction
+  | EdgeClickAction
   | BackgroundClickAction
   | BackgroundDoubleClickAction
   | RectSelectStartAction
@@ -86,6 +88,15 @@ export interface NodeDragEndAction {
   readonly worldPoint: WorldPoint;
   readonly totalDeltaWorldX: number;
   readonly totalDeltaWorldY: number;
+}
+
+/** Edgeの単クリック。→ Edge選択のトリガー。 */
+export interface EdgeClickAction {
+  readonly type: "edge_click";
+  readonly edgeId: EdgeId;
+  readonly sourceNodeId: NodeId;
+  readonly targetNodeId: NodeId;
+  readonly worldPoint: WorldPoint;
 }
 
 /** 背景の単クリック。→ 選択解除のトリガー。 */

@@ -3,6 +3,7 @@ export type {
   EventPage,
   NodeSnapshot,
   PersistedNodeRecord,
+  PersistedEdgeRecord,
   StoreStats,
   BatchOperation,
   EventStore,

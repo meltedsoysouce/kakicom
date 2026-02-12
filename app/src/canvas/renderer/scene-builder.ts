@@ -1,5 +1,6 @@
-import type { RenderableNode, RenderScene } from "./types.ts";
+import type { RenderableNode, RenderableEdge, RenderScene } from "./types.ts";
 import type { Node } from "../../model/node/index.ts";
+import type { Edge } from "../../model/edge/index.ts";
 import type { WorldPoint } from "../viewport/index.ts";
 import type { DormancyState } from "../../model/meta/index.ts";
 import { extractText } from "../../model/node/payload.ts";
@@ -29,6 +30,28 @@ export function toRenderableNode(params: {
     size: { width, height },
     selected,
     hovered,
+  };
+}
+
+/**
+ * model/ のEdgeデータからRenderableEdgeを構築する。
+ */
+export function toRenderableEdge(params: {
+  edge: Edge;
+  sourcePosition: WorldPoint;
+  targetPosition: WorldPoint;
+  selected: boolean;
+}): RenderableEdge {
+  const { edge, sourcePosition, targetPosition, selected } = params;
+  return {
+    id: edge.id,
+    sourceNodeId: edge.sourceNodeId,
+    targetNodeId: edge.targetNodeId,
+    sourcePosition,
+    targetPosition,
+    relation: edge.relation,
+    label: edge.label,
+    selected,
   };
 }
 

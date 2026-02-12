@@ -70,7 +70,7 @@ export function createDragMachine(): DragMachine {
           lastScreen: screenPoint,
         };
       } else {
-        // Node → pending状態（idleのまま、pendingTargetで保持）
+        // Node / Edge → pending状態（idleのまま、pendingTargetで保持）
         state.drag = { type: "idle" };
       }
     },
@@ -169,17 +169,24 @@ export function createDragMachine(): DragMachine {
       }
 
       // pending状態でmouseup → クリック
-      if (
-        prevDrag.type === "idle" &&
-        pendingTarget !== null &&
-        pendingTarget.type === "node"
-      ) {
-        return {
-          type: "node_click",
-          nodeId: pendingTarget.nodeId,
-          worldPoint,
-          shiftKey: false, // shiftKey は input-handler 側で設定
-        };
+      if (prevDrag.type === "idle" && pendingTarget !== null) {
+        if (pendingTarget.type === "node") {
+          return {
+            type: "node_click",
+            nodeId: pendingTarget.nodeId,
+            worldPoint,
+            shiftKey: false, // shiftKey は input-handler 側で設定
+          };
+        }
+        if (pendingTarget.type === "edge") {
+          return {
+            type: "edge_click",
+            edgeId: pendingTarget.edgeId,
+            sourceNodeId: pendingTarget.sourceNodeId,
+            targetNodeId: pendingTarget.targetNodeId,
+            worldPoint,
+          };
+        }
       }
 
       return null;

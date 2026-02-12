@@ -1,5 +1,6 @@
 import type { ViewportState, WorldPoint, CanvasSize } from "../viewport/index.ts";
 import type { NodeId, Payload, NodeKind, EpistemicState } from "../../model/node/index.ts";
+import type { EdgeId } from "../../model/edge/index.ts";
 import type { EdgeRelation, AnnotationKind } from "../../model/projection/index.ts";
 import type { DormancyState } from "../../model/meta/index.ts";
 import type { BackgroundStyle } from "../../model/view/index.ts";
@@ -126,11 +127,14 @@ export interface RenderableNode {
  * 描画に必要なEdge情報を統合したデータ。
  */
 export interface RenderableEdge {
+  readonly id: EdgeId;
+  readonly sourceNodeId: NodeId;
+  readonly targetNodeId: NodeId;
   readonly sourcePosition: WorldPoint;
   readonly targetPosition: WorldPoint;
   readonly relation: EdgeRelation;
   readonly label: string | null;
-  readonly weight: number;
+  readonly selected: boolean;
 }
 
 /**
