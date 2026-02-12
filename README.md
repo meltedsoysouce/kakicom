@@ -38,6 +38,13 @@ pnpm dev        # http://localhost:5173
 | `Delete` / `Backspace` | 選択中のEdgeを削除 |
 | `Escape` | リンクモードのキャンセル / 選択解除 |
 
+### ファイル保存・読込
+
+| 操作 | 説明 |
+|------|------|
+| `Ctrl+S` (`Cmd+S`) | エクスポート — 全Node・Edgeを `.kakicom.json` ファイルに保存 |
+| `Ctrl+O` (`Cmd+O`) | インポート — `.kakicom.json` ファイルを読み込み（既存データを全置換） |
+
 ### その他
 
 | 操作 | 説明 |

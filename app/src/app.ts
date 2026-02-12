@@ -10,6 +10,14 @@ import type {
 import type { InputAction } from "./canvas/input/index.ts";
 import type { RenderScene, RenderableNode, RenderableEdge } from "./canvas/renderer/index.ts";
 import type { EventStore, NodeSnapshot, PersistedNodeRecord, PersistedEdgeRecord } from "./storage/event-store/index.ts";
+import {
+  collectExportData,
+  serializeToJson,
+  parseExportJson,
+  importExportData,
+  saveFile,
+  loadFile,
+} from "./storage/file-port/index.ts";
 
 import { createNode, updateNode, now } from "./model/node/index.ts";
 import { extractText } from "./model/node/index.ts";
@@ -45,6 +53,8 @@ interface AppState {
 export interface App {
   start(): void;
   resize(): void;
+  exportToFile(): Promise<void>;
+  importFromFile(): Promise<void>;
 }
 
 export function createApp(params: {
@@ -401,6 +411,51 @@ export function createApp(params: {
     }
   }
 
+  // ── Export / Import ──
+
+  function generateExportFileName(): string {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `kakicom-${yyyy}-${mm}-${dd}.kakicom.json`;
+  }
+
+  async function handleExport(): Promise<void> {
+    try {
+      const envelope = await collectExportData(eventStore);
+      const json = serializeToJson(envelope);
+      await saveFile(json, generateExportFileName());
+      console.log(
+        `[kakicom] exported: ${envelope.data.nodes.length} nodes, ${envelope.data.edges.length} edges`,
+      );
+    } catch (err) {
+      console.error("[kakicom] export failed:", err);
+    }
+  }
+
+  async function handleImport(): Promise<void> {
+    try {
+      const content = await loadFile();
+      if (content === null) return;
+
+      const result = parseExportJson(content);
+      if (!result.ok) {
+        console.error("[kakicom] import validation failed:", result.errors);
+        return;
+      }
+
+      const importResult = await importExportData(eventStore, result.data, "replace");
+      console.log(
+        `[kakicom] imported: ${importResult.nodesImported} nodes, ${importResult.edgesImported} edges`,
+      );
+
+      window.location.reload();
+    } catch (err) {
+      console.error("[kakicom] import failed:", err);
+    }
+  }
+
   // ── Public API ──
 
   return {
@@ -424,6 +479,21 @@ export function createApp(params: {
       inputHandler.attach(canvas);
       inputHandler.onAction(handleAction);
 
+      // Export / Import キーボードショートカット
+      window.addEventListener("keydown", (e: KeyboardEvent) => {
+        const mod = e.ctrlKey || e.metaKey;
+
+        if (mod && e.key === "s") {
+          e.preventDefault();
+          handleExport();
+        }
+
+        if (mod && e.key === "o") {
+          e.preventDefault();
+          handleImport();
+        }
+      });
+
       // 初回描画
       rebuildScene();
     },
@@ -435,5 +505,8 @@ export function createApp(params: {
       renderer.resize(size);
       updateViewport();
     },
+
+    exportToFile: handleExport,
+    importFromFile: handleImport,
   };
 }
