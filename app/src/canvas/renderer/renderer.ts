@@ -6,6 +6,7 @@ import type {
 import type { ViewportState, CanvasSize } from "../viewport/index.ts";
 import { applyCanvasSize } from "../viewport/canvas-size.ts";
 import { drawBackground } from "./draw-background.ts";
+import { drawEdge } from "./draw-edge.ts";
 import { drawNode } from "./draw-node.ts";
 import { emptyScene } from "./scene-builder.ts";
 import { DARK_THEME } from "./theme.ts";
@@ -62,6 +63,11 @@ export function createRenderer(options?: {
 
     // 背景描画（ドットグリッド）
     drawBackground(ctx, viewport, theme);
+
+    // Edge描画（Nodeの下に描画）
+    for (const edge of scene.edges) {
+      drawEdge(ctx, edge, theme);
+    }
 
     // Node描画
     for (const node of scene.nodes) {

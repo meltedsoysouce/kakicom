@@ -5,11 +5,12 @@ export const STORE_NAMES = {
   NODES: "nodes",
   SESSIONS: "sessions",
   BLOBS: "blobs",
+  EDGES: "edges",
 } as const;
 
 export const KAKICOM_DB_CONFIG: DatabaseConfig = {
   name: "kakicom",
-  version: 1,
+  version: 2,
   migrations: [
     {
       version: 1,
@@ -29,6 +30,14 @@ export const KAKICOM_DB_CONFIG: DatabaseConfig = {
 
         // blobs store (for post-MVP use)
         db.createObjectStore("blobs", { keyPath: "id" });
+      },
+    },
+    {
+      version: 2,
+      migrate(db) {
+        const edges = db.createObjectStore("edges", { keyPath: "id" });
+        edges.createIndex("source_node_id", "sourceNodeId", { unique: false });
+        edges.createIndex("target_node_id", "targetNodeId", { unique: false });
       },
     },
   ],

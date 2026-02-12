@@ -106,6 +106,16 @@ export function createInputHandler(
     }
   }
 
+  function onKeyDown(e: KeyboardEvent): void {
+    emit({
+      type: "key",
+      key: e.key,
+      ctrlKey: e.ctrlKey,
+      shiftKey: e.shiftKey,
+      altKey: e.altKey,
+    });
+  }
+
   function onContextMenu(e: MouseEvent): void {
     e.preventDefault();
   }
@@ -121,6 +131,7 @@ export function createInputHandler(
       canvas.addEventListener("wheel", onWheel, { passive: false });
       canvas.addEventListener("dblclick", onDblClick);
       canvas.addEventListener("contextmenu", onContextMenu);
+      document.addEventListener("keydown", onKeyDown);
     },
 
     detach(): void {
@@ -131,6 +142,7 @@ export function createInputHandler(
       canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("dblclick", onDblClick);
       canvas.removeEventListener("contextmenu", onContextMenu);
+      document.removeEventListener("keydown", onKeyDown);
       canvas = null;
       machine.reset();
     },

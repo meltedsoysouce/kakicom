@@ -31,7 +31,7 @@ export { DARK_THEME, LIGHT_THEME, STATIONERY_THEME, applyThemeToCss } from "./th
 
 // ── RenderScene 構築補助 ──
 
-export { toRenderableNode, emptyScene } from "./scene-builder.ts";
+export { toRenderableNode, toRenderableEdge, emptyScene } from "./scene-builder.ts";
 
 // ── EpistemicVisual / DormancyVisual デフォルト ──
 

@@ -1,8 +1,9 @@
 import { openDatabase, KAKICOM_DB_CONFIG, STORE_NAMES } from "../db/index.ts";
 import type { Database } from "../db/index.ts";
-import type { NodeSnapshot, PersistedNodeRecord, EventStore } from "./types.ts";
+import type { NodeSnapshot, PersistedNodeRecord, PersistedEdgeRecord, EventStore } from "./types.ts";
 import type { Position } from "../../model/projection/index.ts";
 import type { NodeId } from "../../model/node/index.ts";
+import type { EdgeId, Edge } from "../../model/edge/index.ts";
 
 export async function createEventStore(options?: {
   dbName?: string;
@@ -49,6 +50,36 @@ export async function createEventStore(options?: {
       await tx.done();
     },
 
+    // ── Edge CRUD ──
+
+    async saveEdge(edge: Edge): Promise<void> {
+      const record: PersistedEdgeRecord = {
+        id: edge.id,
+        sourceNodeId: edge.sourceNodeId,
+        targetNodeId: edge.targetNodeId,
+        relation: edge.relation,
+        label: edge.label,
+        createdAt: edge.createdAt,
+      };
+      const tx = db.transaction([STORE_NAMES.EDGES], "readwrite");
+      const store = tx.store<PersistedEdgeRecord>(STORE_NAMES.EDGES);
+      await store.put(record);
+      await tx.done();
+    },
+
+    async getAllEdges(): Promise<readonly PersistedEdgeRecord[]> {
+      const tx = db.transaction([STORE_NAMES.EDGES], "readonly");
+      const store = tx.store<PersistedEdgeRecord>(STORE_NAMES.EDGES);
+      return await store.getAll();
+    },
+
+    async deleteEdge(edgeId: EdgeId): Promise<void> {
+      const tx = db.transaction([STORE_NAMES.EDGES], "readwrite");
+      const store = tx.store<PersistedEdgeRecord>(STORE_NAMES.EDGES);
+      await store.delete(edgeId);
+      await tx.done();
+    },
+
     async getStats() {
       const tx = db.transaction(
         [STORE_NAMES.EVENTS, STORE_NAMES.NODES, STORE_NAMES.SESSIONS],
@@ -68,6 +99,7 @@ export async function createEventStore(options?: {
         STORE_NAMES.NODES,
         STORE_NAMES.SESSIONS,
         STORE_NAMES.BLOBS,
+        STORE_NAMES.EDGES,
       ];
       const tx = db.transaction(storeNames, "readwrite");
       for (const name of storeNames) {

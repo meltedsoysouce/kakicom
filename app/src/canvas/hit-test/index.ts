@@ -1,6 +1,7 @@
 export type {
   HitTarget,
   HitTestEntry,
+  HitTestEdgeEntry,
   HitTestableScene,
   SelectionRect,
   HitTestOptions,
@@ -50,4 +51,5 @@ export {
   rectContainsRect,
   rectIntersects,
   expandRect,
+  distanceToSegment,
 } from "./rect-utils.ts";

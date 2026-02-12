@@ -1,4 +1,5 @@
 import type { NodeId, Node, Timestamp } from "../../model/node/index.ts";
+import type { EdgeId, Edge } from "../../model/edge/index.ts";
 import type {
   ThoughtEvent,
   EventType,
@@ -6,7 +7,7 @@ import type {
   SessionId,
 } from "../../model/event/index.ts";
 import type { DormancyState } from "../../model/meta/index.ts";
-import type { Position } from "../../model/projection/index.ts";
+import type { Position, EdgeRelation } from "../../model/projection/index.ts";
 
 /**
  * ThoughtEventの検索条件。
@@ -59,6 +60,19 @@ export interface PersistedNodeRecord {
   readonly dormancyState: DormancyState;
   readonly updatedAt: Timestamp;
   readonly position: Position | null;
+}
+
+/**
+ * IndexedDBに保存されるEdgeデータ。
+ * keyPath: "id" に対応する構造。
+ */
+export interface PersistedEdgeRecord {
+  readonly id: EdgeId;
+  readonly sourceNodeId: NodeId;
+  readonly targetNodeId: NodeId;
+  readonly relation: EdgeRelation;
+  readonly label: string | null;
+  readonly createdAt: Timestamp;
 }
 
 /**
@@ -117,6 +131,17 @@ export interface EventStore {
 
   /** 指定IDのNodeスナップショットを削除する。 */
   deleteNode(nodeId: NodeId): Promise<void>;
+
+  // ── Edge ──
+
+  /** Edgeを保存する（upsert）。 */
+  saveEdge(edge: Edge): Promise<void>;
+
+  /** 全Edgeを取得する。 */
+  getAllEdges(): Promise<readonly PersistedEdgeRecord[]>;
+
+  /** 指定IDのEdgeを削除する。 */
+  deleteEdge(edgeId: EdgeId): Promise<void>;
 
   // ── Session ──
 

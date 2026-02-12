@@ -10,11 +10,12 @@ async function main(): Promise<void> {
   // 2. ストレージ初期化
   const eventStore = await createEventStore();
 
-  // 3. 既存Node読み込み
+  // 3. 既存Node・Edge読み込み
   const records = await eventStore.getAllNodes();
+  const edges = await eventStore.getAllEdges();
 
   // 4. アプリ生成・起動
-  const app = createApp({ canvas, container, eventStore, initialRecords: records });
+  const app = createApp({ canvas, container, eventStore, initialRecords: records, initialEdges: edges });
   app.start();
 
   // 5. リサイズ対応
