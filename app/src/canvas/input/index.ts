@@ -8,6 +8,7 @@ export type {
   NodeDragStartAction,
   NodeDragMoveAction,
   NodeDragEndAction,
+  EdgeClickAction,
   BackgroundClickAction,
   BackgroundDoubleClickAction,
   RectSelectStartAction,

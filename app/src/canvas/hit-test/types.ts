@@ -1,5 +1,6 @@
 import type { WorldPoint, WorldRect } from "../viewport/index.ts";
 import type { NodeId } from "../../model/node/index.ts";
+import type { EdgeId } from "../../model/edge/index.ts";
 
 /**
  * ヒットテストの結果。
@@ -9,6 +10,7 @@ export type HitTarget =
   | { readonly type: "node"; readonly nodeId: NodeId }
   | {
       readonly type: "edge";
+      readonly edgeId: EdgeId;
       readonly sourceNodeId: NodeId;
       readonly targetNodeId: NodeId;
     }
@@ -25,11 +27,23 @@ export interface HitTestEntry {
 }
 
 /**
+ * ヒットテスト対象のEdge情報。
+ */
+export interface HitTestEdgeEntry {
+  readonly edgeId: EdgeId;
+  readonly sourceNodeId: NodeId;
+  readonly targetNodeId: NodeId;
+  readonly sourcePosition: WorldPoint;
+  readonly targetPosition: WorldPoint;
+}
+
+/**
  * ヒットテスト可能なシーン全体。
- * 現在画面上に存在する全Nodeのバウンディングボックスを保持する。
+ * 現在画面上に存在する全Nodeのバウンディングボックスと全Edgeを保持する。
  */
 export interface HitTestableScene {
   readonly entries: readonly HitTestEntry[];
+  readonly edges: readonly HitTestEdgeEntry[];
 }
 
 /**

@@ -1,4 +1,5 @@
 import type { NodeId } from "./model/node/index.ts";
+import type { EdgeId, Edge } from "./model/edge/index.ts";
 import type { Position } from "./model/projection/index.ts";
 import type {
   Camera,
@@ -7,11 +8,12 @@ import type {
   WorldPoint,
 } from "./canvas/viewport/index.ts";
 import type { InputAction } from "./canvas/input/index.ts";
-import type { RenderScene, RenderableNode } from "./canvas/renderer/index.ts";
-import type { EventStore, NodeSnapshot, PersistedNodeRecord } from "./storage/event-store/index.ts";
+import type { RenderScene, RenderableNode, RenderableEdge } from "./canvas/renderer/index.ts";
+import type { EventStore, NodeSnapshot, PersistedNodeRecord, PersistedEdgeRecord } from "./storage/event-store/index.ts";
 
 import { createNode, updateNode, now } from "./model/node/index.ts";
 import { extractText } from "./model/node/index.ts";
+import { createEdge } from "./model/edge/index.ts";
 import {
   defaultCamera,
   panByScreenDelta,
@@ -19,17 +21,25 @@ import {
   measureCanvasSize,
   applyCanvasSize,
 } from "./canvas/viewport/index.ts";
-import { createRenderer, toRenderableNode, STATIONERY_THEME, applyThemeToCss } from "./canvas/renderer/index.ts";
+import { createRenderer, toRenderableNode, toRenderableEdge, STATIONERY_THEME, applyThemeToCss } from "./canvas/renderer/index.ts";
 import { createHitTester, buildHitTestableScene } from "./canvas/hit-test/index.ts";
 import { createInputHandler } from "./canvas/input/index.ts";
 import { createTextEditor } from "./text-editor.ts";
+
+type LinkModeState =
+  | { type: "inactive" }
+  | { type: "selecting_source" }
+  | { type: "selecting_target"; sourceNodeId: NodeId };
 
 interface AppState {
   camera: Camera;
   canvasSize: CanvasSize;
   nodes: Map<NodeId, NodeSnapshot>;
   positions: Map<NodeId, Position>;
+  edges: Map<EdgeId, Edge>;
   selectedNodeId: NodeId | null;
+  selectedEdgeId: EdgeId | null;
+  linkMode: LinkModeState;
 }
 
 export interface App {
@@ -42,6 +52,7 @@ export function createApp(params: {
   container: HTMLDivElement;
   eventStore: EventStore;
   initialRecords: readonly PersistedNodeRecord[];
+  initialEdges: readonly PersistedEdgeRecord[];
 }): App {
   const { canvas, container, eventStore } = params;
 
@@ -52,7 +63,10 @@ export function createApp(params: {
     canvasSize: measureCanvasSize(canvas),
     nodes: new Map(),
     positions: new Map(),
+    edges: new Map(),
     selectedNodeId: null,
+    selectedEdgeId: null,
+    linkMode: { type: "inactive" },
   };
 
   // 読み込んだNodeを復元
@@ -67,6 +81,19 @@ export function createApp(params: {
     if (record.position) {
       state.positions.set(nodeId, record.position);
     }
+  }
+
+  // 読み込んだEdgeを復元
+  for (const record of params.initialEdges) {
+    const edge: Edge = {
+      id: record.id,
+      sourceNodeId: record.sourceNodeId,
+      targetNodeId: record.targetNodeId,
+      relation: record.relation,
+      label: record.label,
+      createdAt: record.createdAt,
+    };
+    state.edges.set(edge.id, edge);
   }
 
   // ── Components ──
@@ -119,9 +146,24 @@ export function createApp(params: {
       );
     }
 
+    const renderableEdges: RenderableEdge[] = [];
+    for (const [edgeId, edge] of state.edges) {
+      const srcPos = state.positions.get(edge.sourceNodeId);
+      const tgtPos = state.positions.get(edge.targetNodeId);
+      if (!srcPos || !tgtPos) continue;
+      renderableEdges.push(
+        toRenderableEdge({
+          edge,
+          sourcePosition: { wx: srcPos.x, wy: srcPos.y },
+          targetPosition: { wx: tgtPos.x, wy: tgtPos.y },
+          selected: edgeId === state.selectedEdgeId,
+        }),
+      );
+    }
+
     const scene: RenderScene = {
       nodes: renderableNodes,
-      edges: [],
+      edges: renderableEdges,
       annotations: [],
       background: "dot_grid",
     };
@@ -129,7 +171,65 @@ export function createApp(params: {
     renderer.setScene(scene);
     renderer.requestRedraw();
 
-    hitTester.setScene(buildHitTestableScene(renderableNodes));
+    hitTester.setScene(buildHitTestableScene(renderableNodes, renderableEdges));
+  }
+
+  // ── Link Mode ──
+
+  function updateCursor(): void {
+    canvas.style.cursor = state.linkMode.type !== "inactive" ? "crosshair" : "";
+  }
+
+  function toggleLinkMode(): void {
+    if (state.linkMode.type !== "inactive") {
+      state.linkMode = { type: "inactive" };
+    } else {
+      state.linkMode = { type: "selecting_source" };
+    }
+    updateCursor();
+    rebuildScene();
+  }
+
+  function cancelLinkMode(): void {
+    if (state.linkMode.type === "inactive") return;
+    state.linkMode = { type: "inactive" };
+    updateCursor();
+    rebuildScene();
+  }
+
+  async function handleLinkModeNodeClick(nodeId: NodeId): Promise<void> {
+    if (state.linkMode.type === "selecting_source") {
+      state.linkMode = { type: "selecting_target", sourceNodeId: nodeId };
+      state.selectedNodeId = nodeId;
+      rebuildScene();
+    } else if (state.linkMode.type === "selecting_target") {
+      const sourceNodeId = state.linkMode.sourceNodeId;
+      if (nodeId === sourceNodeId) {
+        // 同じNodeクリック → キャンセル
+        cancelLinkMode();
+        return;
+      }
+      // Edge作成
+      const edge = createEdge({ sourceNodeId, targetNodeId: nodeId });
+      state.edges.set(edge.id, edge);
+      await eventStore.saveEdge(edge);
+      state.linkMode = { type: "inactive" };
+      state.selectedNodeId = null;
+      state.selectedEdgeId = edge.id;
+      updateCursor();
+      rebuildScene();
+    }
+  }
+
+  // ── Edge Operations ──
+
+  async function deleteSelectedEdge(): Promise<void> {
+    if (!state.selectedEdgeId) return;
+    const edgeId = state.selectedEdgeId;
+    state.edges.delete(edgeId);
+    state.selectedEdgeId = null;
+    await eventStore.deleteEdge(edgeId);
+    rebuildScene();
   }
 
   // ── Node Operations ──
@@ -214,20 +314,48 @@ export function createApp(params: {
         break;
 
       case "background_double_click":
-        createNewNode(action.worldPoint);
+        if (state.linkMode.type !== "inactive") {
+          cancelLinkMode();
+        } else {
+          createNewNode(action.worldPoint);
+        }
         break;
 
       case "background_click":
-        state.selectedNodeId = null;
-        rebuildScene();
+        if (state.linkMode.type !== "inactive") {
+          cancelLinkMode();
+        } else {
+          state.selectedNodeId = null;
+          state.selectedEdgeId = null;
+          rebuildScene();
+        }
         break;
 
       case "node_click":
-        state.selectedNodeId = action.nodeId;
-        rebuildScene();
+        if (state.linkMode.type !== "inactive") {
+          handleLinkModeNodeClick(action.nodeId);
+        } else {
+          state.selectedNodeId = action.nodeId;
+          state.selectedEdgeId = null;
+          rebuildScene();
+        }
+        break;
+
+      case "edge_click":
+        if (state.linkMode.type !== "inactive") {
+          cancelLinkMode();
+        } else {
+          state.selectedEdgeId = action.edgeId;
+          state.selectedNodeId = null;
+          rebuildScene();
+        }
         break;
 
       case "node_double_click": {
+        if (state.linkMode.type !== "inactive") {
+          cancelLinkMode();
+          break;
+        }
         const snapshot = state.nodes.get(action.nodeId);
         const currentText = snapshot ? extractText(snapshot.node.payload) : "";
         textEditor.open(action.nodeId, action.worldPoint, currentText);
@@ -235,16 +363,40 @@ export function createApp(params: {
       }
 
       case "node_drag_start":
+        if (state.linkMode.type !== "inactive") break;
         state.selectedNodeId = action.nodeId;
+        state.selectedEdgeId = null;
         rebuildScene();
         break;
 
       case "node_drag_move":
+        if (state.linkMode.type !== "inactive") break;
         moveNode(action.nodeId, action.deltaWorldX, action.deltaWorldY);
         break;
 
       case "node_drag_end":
+        if (state.linkMode.type !== "inactive") break;
         saveNodePosition(action.nodeId);
+        break;
+
+      case "key":
+        if (action.key === "l" || action.key === "L") {
+          toggleLinkMode();
+        }
+        if (action.key === "Escape") {
+          if (state.linkMode.type !== "inactive") {
+            cancelLinkMode();
+          } else {
+            state.selectedNodeId = null;
+            state.selectedEdgeId = null;
+            rebuildScene();
+          }
+        }
+        if (action.key === "Delete" || action.key === "Backspace") {
+          if (state.selectedEdgeId) {
+            deleteSelectedEdge();
+          }
+        }
         break;
     }
   }
